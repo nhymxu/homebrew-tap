@@ -1,4 +1,4 @@
-class usql < Formula
+cask "usql" do
   arch arm: "arm64", intel: "amd64"
 
   version "0.17.0"
