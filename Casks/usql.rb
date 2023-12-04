@@ -15,5 +15,7 @@ cask "usql" do
     strategy :github_latest
   end
 
+  conflicts_with cask: "xo/xo/usql"
+
   binary "usql"
 end
