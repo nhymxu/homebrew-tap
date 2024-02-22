@@ -42,4 +42,5 @@ With the following commands, you can install the latest version of each product:
 ```sh
 # Formulae
 brew install nhymxu/tap/usql
+brew install nhymxu/tap/defguard-client
 ```
