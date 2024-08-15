@@ -1,5 +1,5 @@
 cask "3utools" do
-  version "3.06.005"
+  version "3.06.007"
   sha256 :no_check # required as upstream package is updated in-place
 
   url "https://dl.3u.com/update/mac/dl/3uTools_v#{version}.dmg"
