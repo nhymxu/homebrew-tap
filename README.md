@@ -40,9 +40,5 @@ outside of search.
 With the following commands, you can install the latest version of each product:
 
 ```sh
-brew install nhymxu/tap/3utools
-brew install nhymxu/tap/battery-toolkit
-brew install nhymxu/tap/defguard-client
-brew install nhymxu/tap/freefilesync
-brew install nhymxu/tap/usql
+brew install nhymxu/tap/{package_name_here}
 ```
