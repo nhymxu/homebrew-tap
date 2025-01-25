@@ -1,8 +1,10 @@
 cask "3utools" do
-  version "3.20.009"
+  version "3.12.001"
   sha256 :no_check # required as upstream package is updated in-place
 
+  # url "https://url2.3u.com/yiiuaqaa"
   url "https://dl.3u.com/update/mac/dl/3uTools_v#{version}.dmg"
+  
   name "3uTools"
   desc "Useful Apple Mobile Device Management Tool"
   homepage "https://www.3u.com/"
