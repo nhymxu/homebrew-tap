@@ -1,7 +1,7 @@
 cask "usql" do
   arch arm: "arm64", intel: "amd64"
 
-  version "0.19.15"
+  version "0.19.16"
   sha256 :no_check
 
   url "https://github.com/xo/usql/releases/download/v#{version}/usql-#{version}-darwin-#{arch}.tar.bz2"
