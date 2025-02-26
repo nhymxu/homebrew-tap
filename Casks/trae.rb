@@ -1,5 +1,3 @@
-
-
 cask "trae" do
     arch arm: "arm64", intel: "x64"
     version "1.0.7272"
@@ -14,4 +12,11 @@ cask "trae" do
     depends_on macos: ">= :catalina"
 
     app "Trae.app"
+
+    zap trash: [
+        "~/.trae",
+        "~/Library/Application Support/Trae",
+        "~/Library/Preferences/com.trae.app.plist",
+        "~/Library/Saved Application State/com.trae.app.savedState",
+    ]
 end
