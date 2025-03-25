@@ -15,6 +15,11 @@ cask "gitbutler" do
     app "GitButler.app"
 
     zap trash: [
-
+        "~/Library/Application Support/gitbutler",
+        "~/Library/Application Support/com.gitbutler.app",
+        "~/Library/Caches/com.gitbutler.app",
+        "~/Library/Saved Application State/com.gitbutler.app.savedState",
+        "~/Library/Preferences/com.gitbutler.app.plist",
+        "~/Library/Logs/com.gitbutler.app"
     ]
 end
