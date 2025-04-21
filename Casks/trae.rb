@@ -1,6 +1,6 @@
 cask "trae" do
     arch arm: "arm64", intel: "x64"
-    version "1.0.7272"
+    version "1.0.11585"
     sha256 :no_check
 
     url "https://lf-cdn.trae.ai/obj/trae-ai-sg/pkg/app/releases/stable/#{version}/darwin/Trae-darwin-#{arch}.dmg"
