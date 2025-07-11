@@ -1,4 +1,4 @@
-cask f2-binary < Formula
+cask f2-binary do
   arch arm: "arm64", intel: "amd64"
 
   version "2.1.2"
