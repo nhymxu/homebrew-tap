@@ -22,4 +22,6 @@ cask "f2-binary" do
   bash_completion "scripts/completions/f2.bash", target: "f2"
   fish_completion "scripts/completions/f2.fish"
   zsh_completion "scripts/completions/f2.zsh", target: "_f2"
+
+  conflicts_with formula: "f2"
 end
