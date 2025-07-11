@@ -10,7 +10,6 @@ cask "f2-binary" do
   name "f2-binary"
   desc "Command-line batch renaming tool"
   homepage "https://github.com/ayoisaiah/f2"
-  license "MIT"
 
   # Upstream may add/remove tags before releasing a version, so we check
   # GitHub releases instead of the Git tags.
