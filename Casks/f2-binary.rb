@@ -1,4 +1,4 @@
-cask f2-binary do
+cask "f2-binary" do
   arch arm: "arm64", intel: "amd64"
 
   version "2.1.2"
@@ -20,10 +20,7 @@ cask f2-binary do
   end
 
   binary "f2"
-
-  def install
-    bash_completion.install "scripts/completions/f2.bash" => "f2"
-    fish_completion.install "scripts/completions/f2.fish"
-    zsh_completion.install "scripts/completions/f2.zsh" => "_f2"
-  end
+  bash_completion "scripts/completions/f2.bash", target: "f2"
+  fish_completion "scripts/completions/f2.fish"
+  zsh_completion "scripts/completions/f2.zsh", target: "_f2"
 end
