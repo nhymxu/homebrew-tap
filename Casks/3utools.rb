@@ -1,5 +1,5 @@
 cask "3utools" do
-  version "3.15.002"
+  version "3.16.006"
   sha256 :no_check # required as upstream package is updated in-place
 
   # url "https://url2.3u.com/yiiuaqaa"
