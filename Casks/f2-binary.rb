@@ -15,7 +15,7 @@ cask "f2-binary" do
     strategy :github_latest
   end
 
-  conflicts_with formula: "f2"
+  # conflicts_with formula: "f2"
 
   binary "f2"
   bash_completion "scripts/completions/f2.bash", target: "f2"
