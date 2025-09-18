@@ -1,9 +1,9 @@
 cask "f2-binary" do
   arch arm: "arm64", intel: "amd64"
 
-  version "2.1.2"
-  sha256  arm:   "4f70b60248ab4293a4f34e79a17e353284bd93e386089a0242914830b7e1b2b3",
-          intel: "4463d3d5d137d5ddb94f7cbfece7d35b4c0950c56e151f980d07306a49a5ad30"
+  version "2.2.1"
+  sha256  arm:   "5c7fe3e5f61c2e41ab7a13270848b0068cc76ebbae2fc6777340b2ca2190203f",
+          intel: "57e79132b466be61c2de223388bc5aa55db296f358fe2e1ca5f2f8e3f31cf6a0"
 
   url "https://github.com/ayoisaiah/f2/releases/download/v#{version}/f2_#{version}_darwin_#{arch}.tar.gz"
   name "f2-binary"
