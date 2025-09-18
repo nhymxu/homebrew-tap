@@ -1,7 +1,7 @@
 cask "defguard-client" do
   arch arm: "aarch64", intel: "x86_64"
 
-  version "1.2.3"
+  version "1.5.0"
   sha256 :no_check
 
   url "https://github.com/DefGuard/client/releases/download/v#{version}/defguard-#{arch}-apple-darwin-#{version}.pkg",
