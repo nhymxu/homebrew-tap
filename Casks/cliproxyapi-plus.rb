@@ -31,4 +31,6 @@ cask "cliproxyapi-plus" do
   postflight do
     system_command "cp", args: ["-n", "#{staged_path}/config.example.yaml", "#{etc_dir}/cliproxyapi-plus.yaml"]
   end
+
+  caveats "You can edit setting on #{etc_dir}/cliproxyapi-plus.yaml."
 end
