@@ -18,6 +18,7 @@ cask "cliproxyapi-plus" do
   plist_label = "nhymxu.homebrew.cliproxyapi-plus"
   plist_dir = "#{etc_dir}/cliproxyapi-plus"
   plist_path = "#{plist_dir}/#{plist_label}.plist"
+  config_path = "#{etc_dir}/cliproxyapi-plus.yaml"
 
   binary "cli-proxy-api-plus"
 
@@ -45,7 +46,7 @@ cask "cliproxyapi-plus" do
           echo "cliproxyapi-plus LaunchAgent unloaded and removed."
           ;;
         *)
-          exec '#{HOMEBREW_PREFIX}/bin/cli-proxy-api-plus' --config '#{etc_dir}/cliproxyapi-plus.yaml' "$@"
+          exec '#{HOMEBREW_PREFIX}/bin/cli-proxy-api-plus' --config '#{config_path}' "$@"
           ;;
       esac
     EOS
@@ -61,7 +62,7 @@ cask "cliproxyapi-plus" do
           <array>
               <string>#{HOMEBREW_PREFIX}/bin/cli-proxy-api-plus</string>
               <string>--config</string>
-              <string>#{etc_dir}/cliproxyapi-plus.yaml</string>
+              <string>#{config_path}</string>
           </array>
           <key>RunAtLoad</key>
           <true/>
@@ -77,7 +78,13 @@ cask "cliproxyapi-plus" do
   end
 
   postflight do
-    system_command "cp", args: ["-n", "#{staged_path}/config.example.yaml", "#{etc_dir}/cliproxyapi-plus.yaml"]
+    if File.exist?(config_path)
+        puts "Config file exists."
+    else
+        puts "Config file not exists. Create default file..."
+        FileUtils.cp "#{staged_path}/config.example.yaml", "#{config_path}"
+    end
+ 
     FileUtils.mkdir_p plist_dir
     FileUtils.cp cpap_plist, plist_path
   end
