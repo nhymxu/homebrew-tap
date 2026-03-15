@@ -1,4 +1,4 @@
-cask "CliproxyapiPlus" do
+cask "cliproxyapi-plus" do
   arch arm: "arm64", intel: "amd64"
 
   version "6.8.53-0"
