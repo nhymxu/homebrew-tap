@@ -34,7 +34,9 @@ cask "cliproxyapi-plus" do
 
   caveats <<~EOS
     You can edit setting on #{etc_dir}/cliproxyapi-plus.yaml.
-    Run with default config file using binary: cliproxyapi-plus
-    Run raw binary without default config file using binary: cli-proxy-api-plus
+    
+    Run binary:
+        - cliproxyapi-plus: load config from etc_dir by default 
+        - cli-proxy-api-plus: load config from the project root by default 
   EOS
 end
