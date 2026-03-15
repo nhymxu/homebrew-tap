@@ -32,5 +32,9 @@ cask "cliproxyapi-plus" do
     system_command "cp", args: ["-n", "#{staged_path}/config.example.yaml", "#{etc_dir}/cliproxyapi-plus.yaml"]
   end
 
-  caveats "You can edit setting on #{etc_dir}/cliproxyapi-plus.yaml."
+  caveats <<~EOS
+    You can edit setting on #{etc_dir}/cliproxyapi-plus.yaml.
+    Run with default config file using binary: cliproxyapi-plus
+    Run raw binary without default config file using binary: cli-proxy-api-plus
+  EOS
 end
