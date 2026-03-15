@@ -39,4 +39,8 @@ cask "cliproxyapi-plus" do
         - cliproxyapi-plus: load config from etc_dir by default 
         - cli-proxy-api-plus: load config from the project root by default 
   EOS
+
+  zap trash: [
+    "#{etc_dir}/cliproxyapi-plus.yaml",
+  ]
 end
