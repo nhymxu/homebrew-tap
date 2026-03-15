@@ -8,7 +8,6 @@ cask "CliproxyapiPlus" do
   name "cliproxyapi-plus"
   desc "The Plus version of CLIProxyAPI. Wrap Gemini CLI, Codex, Claude Code, Qwen Code as an API service"
   homepage "https://github.com/router-for-me/CLIProxyAPIPlus"
-  head "https://github.com/router-for-me/CLIProxyAPIPlus.git", branch "main"
 
   livecheck do
     url :url
