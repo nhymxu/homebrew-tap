@@ -14,6 +14,8 @@ cask "cliproxyapi-plus" do
     strategy :github_latest
   end
 
+  etc_dir = "#{HOMEBREW_PREFIX}/etc"
+
   binary "cli-proxy-api-plus"
 
   cpap_shimscript = "#{staged_path}/cliproxyapi-plus.wrapper.sh"
@@ -22,31 +24,11 @@ cask "cliproxyapi-plus" do
   preflight do
     File.write cpap_shimscript, <<~EOS
       #!/bin/sh
-      exec '#{opt_bin}/cli-proxy-api-plus' --config '#{etc/"cliproxyapi-plus.conf"} "$@"
+      exec '#{HOMEBREW_PREFIX}/bin/cli-proxy-api-plus' --config '#{etc_dir}/cliproxyapi-plus.yaml' "$@"
     EOS
   end
 
   postflight do
-    # File.write "#{opt_bin}/cliproxyapi-plus", <<~SH
-    #   #!/bin/sh
-
-    #   exec '#{opt_bin}/cli-proxy-api-plus' --config '#{etc/"cliproxyapi-plus.conf"} "$@"
-    # SH
-
-    etc.install "config.example.yaml" => "cliproxyapi-plus.conf"
-  end
-
-  service do
-    run [opt_bin/"cliproxyapi-plus"]
-    keep_alive true
-  end
-
-  test do
-    require "pty"
-    PTY.spawn(bin/"cliproxyapi-plus", "-login", "-no-browser") do |r, _w, pid|
-      sleep 5
-      Process.kill "TERM", pid
-      assert_match "accounts.google.com", r.read_nonblock(1024)
-    end
+    system_command "cp", args: ["-n", "#{staged_path}/config.example.yaml", "#{etc_dir}/cliproxyapi-plus.yaml"]
   end
 end
