@@ -1,0 +1,66 @@
+name: Auto Update CLIProxyAPIPlus
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check latest version
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LATEST_TAG=$(gh release view --repo router-for-me/CLIProxyAPIPlus --json tagName -q .tagName)
+          LATEST_VERSION="${LATEST_TAG#v}"
+
+          CURRENT_VERSION=$(sed -n 's/.*version "\([^"]*\)".*/\1/p' Casks/cliproxyapi-plus.rb)
+
+          echo "Latest version: $LATEST_VERSION"
+          echo "Current version: $CURRENT_VERSION"
+
+          echo "latest_version=$LATEST_VERSION" >> "$GITHUB_OUTPUT"
+          echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+
+          if [ "$LATEST_VERSION" = "$CURRENT_VERSION" ]; then
+            echo "update_needed=false" >> "$GITHUB_OUTPUT"
+          else
+            NEWER=$(printf '%s\n%s\n' "$CURRENT_VERSION" "$LATEST_VERSION" | sort -V | tail -1)
+            if [ "$NEWER" = "$LATEST_VERSION" ]; then
+              echo "update_needed=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "update_needed=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Update cask version
+        if: steps.check.outputs.update_needed == 'true'
+        env:
+          CURRENT_VERSION: ${{ steps.check.outputs.current_version }}
+          LATEST_VERSION: ${{ steps.check.outputs.latest_version }}
+        run: |
+          ESCAPED_CURRENT=$(printf '%s\n' "$CURRENT_VERSION" | sed 's/[.[\*^$]/\\&/g')
+          sed -i "s/version \"${ESCAPED_CURRENT}\"/version \"${LATEST_VERSION}\"/" Casks/cliproxyapi-plus.rb
+
+      - name: Create Pull Request
+        if: steps.check.outputs.update_needed == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update CLIProxyAPIPlus to ${{ steps.check.outputs.latest_version }}"
+          branch: "update/cliproxyapi-plus-${{ steps.check.outputs.latest_version }}"
+          title: "chore: update CLIProxyAPIPlus to ${{ steps.check.outputs.latest_version }}"
+          body: |
+            Auto-update CLIProxyAPIPlus from `${{ steps.check.outputs.current_version }}` to `${{ steps.check.outputs.latest_version }}`.
+
+            Release notes: https://github.com/router-for-me/CLIProxyAPIPlus/releases/tag/v${{ steps.check.outputs.latest_version }}
+          labels: auto-update
