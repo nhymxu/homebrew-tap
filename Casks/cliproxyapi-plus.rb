@@ -1,7 +1,7 @@
 cask "cliproxyapi-plus" do
   arch arm: "arm64", intel: "amd64"
 
-  version "6.9.0-0"
+  version "6.9.1-0"
   sha256 :no_check
 
   url "https://github.com/router-for-me/CLIProxyAPIPlus/releases/download/v#{version}/CLIProxyAPIPlus_#{version}_darwin_#{arch}.tar.gz"
