@@ -1,4 +1,4 @@
-name: Auto Update CLIProxyAPIPlus
+name: Auto Update Casks
 
 on:
   schedule:
@@ -15,23 +15,43 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix:
+        cask:
+          - name: cliproxyapi-plus
+            file: Casks/cliproxyapi-plus.rb
+            repo: router-for-me/CLIProxyAPIPlus
+          - name: defguard-client
+            file: Casks/defguard-client.rb
+            repo: DefGuard/client
+          - name: f2-binary
+            file: Casks/f2-binary.rb
+            repo: ayoisaiah/f2
+          - name: gotohp
+            file: Casks/gotohp.rb
+            repo: xob0t/gotohp
+          - name: usql
+            file: Casks/usql.rb
+            repo: xo/usql
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Check latest version
         id: check
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          LATEST_TAG=$(gh release view --repo router-for-me/CLIProxyAPIPlus --json tagName -q .tagName)
+          LATEST_TAG=$(gh release view --repo ${{ matrix.cask.repo }} --json tagName -q .tagName)
           LATEST_VERSION="${LATEST_TAG#v}"
 
-          CURRENT_VERSION=$(sed -n 's/.*version "\([^"]*\)".*/\1/p' Casks/cliproxyapi-plus.rb)
+          CURRENT_VERSION=$(sed -n 's/.*version "\([^"]*\)".*/\1/p' ${{ matrix.cask.file }})
 
           echo "Latest version: $LATEST_VERSION"
           echo "Current version: $CURRENT_VERSION"
 
+          echo "latest_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
           echo "latest_version=$LATEST_VERSION" >> "$GITHUB_OUTPUT"
           echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
 
@@ -52,20 +72,20 @@ jobs:
           CURRENT_VERSION: ${{ steps.check.outputs.current_version }}
           LATEST_VERSION: ${{ steps.check.outputs.latest_version }}
         run: |
-          ESCAPED_CURRENT=$(printf '%s\n' "$CURRENT_VERSION" | sed 's/[.[\*^$]/\\&/g')
-          sed -i "s/version \"${ESCAPED_CURRENT}\"/version \"${LATEST_VERSION}\"/" Casks/cliproxyapi-plus.rb
+          ESCAPED_CURRENT=$(printf '%s\n' "$CURRENT_VERSION" | sed 's/[.[\\*^$]/\\&/g')
+          sed -i "s/version \"${ESCAPED_CURRENT}\"/version \"${LATEST_VERSION}\"/" ${{ matrix.cask.file }}
 
       - name: Create Pull Request
         if: steps.check.outputs.update_needed == 'true'
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: update CLIProxyAPIPlus to ${{ steps.check.outputs.latest_version }}"
-          branch: "update/cliproxyapi-plus-${{ steps.check.outputs.latest_version }}"
-          title: "chore: update CLIProxyAPIPlus to ${{ steps.check.outputs.latest_version }}"
+          commit-message: "chore: update ${{ matrix.cask.name }} to ${{ steps.check.outputs.latest_version }}"
+          branch: "update/${{ matrix.cask.name }}-${{ steps.check.outputs.latest_version }}"
+          title: "chore: update ${{ matrix.cask.name }} to ${{ steps.check.outputs.latest_version }}"
           body: |
-            Auto-update CLIProxyAPIPlus from `${{ steps.check.outputs.current_version }}` to `${{ steps.check.outputs.latest_version }}`.
+            Auto-update ${{ matrix.cask.name }} from `${{ steps.check.outputs.current_version }}` to `${{ steps.check.outputs.latest_version }}`.
 
-            Release notes: https://github.com/router-for-me/CLIProxyAPIPlus/releases/tag/v${{ steps.check.outputs.latest_version }}
+            Release notes: https://github.com/${{ matrix.cask.repo }}/releases/tag/${{ steps.check.outputs.latest_tag }}
           labels: auto-update
           reviewers: nhymxu
