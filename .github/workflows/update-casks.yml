@@ -36,7 +36,7 @@ jobs:
             repo: xo/usql
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Check latest version
         id: check
