@@ -16,7 +16,6 @@ class CliproxyapiPlus < Formula
   def install
     bin.install "cli-proxy-api-plus"
     etc.install "config.example.yaml" => "cliproxyapi-plus.yaml"
-	# rm bin/"cliproxyapi-plus"
     (bin/"cliproxyapi-plus").write <<~SHELL
       #!/bin/sh
       exec '#{bin}/cli-proxy-api-plus' --config '#{etc}/cliproxyapi-plus.yaml' "$@"
@@ -24,16 +23,10 @@ class CliproxyapiPlus < Formula
   end
 
   service do
-    # run [opt_bin/"cli-proxy-api-plus", "--config", etc/"cliproxyapi-plus.yaml"]
     run [opt_bin/"cliproxyapi-plus"]
     keep_alive true
   end
 
-      # To start cliproxyapi-plus now and restart at login:
-      #   brew services start nhymxu/tap/cliproxyapi-plus
-      #
-      # To stop the service:
-      #   brew services stop nhymxu/tap/cliproxyapi-plus
   def caveats
     <<~EOS
       You can edit settings at #{etc}/cliproxyapi-plus.yaml.

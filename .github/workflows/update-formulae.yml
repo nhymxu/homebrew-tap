@@ -1,0 +1,139 @@
+name: Auto Update Formulae
+
+on:
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix:
+        formula:
+          - name: cliproxyapi-plus
+            file: Formula/cliproxyapi-plus.rb
+            repo: router-for-me/CLIProxyAPIPlus
+            assets:
+              - arch: arm64
+                pattern: "CLIProxyAPIPlus_{version}_darwin_arm64.tar.gz"
+              - arch: amd64
+                pattern: "CLIProxyAPIPlus_{version}_darwin_amd64.tar.gz"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Check latest version
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LATEST_TAG=$(gh release view --repo ${{ matrix.formula.repo }} --json tagName -q .tagName)
+          LATEST_VERSION="${LATEST_TAG#v}"
+
+          CURRENT_VERSION=$(sed -n 's/.*version "\([^"]*\)".*/\1/p' ${{ matrix.formula.file }})
+
+          echo "Latest version: $LATEST_VERSION"
+          echo "Current version: $CURRENT_VERSION"
+
+          echo "latest_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
+          echo "latest_version=$LATEST_VERSION" >> "$GITHUB_OUTPUT"
+          echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+
+          if [ "$LATEST_VERSION" = "$CURRENT_VERSION" ]; then
+            echo "update_needed=false" >> "$GITHUB_OUTPUT"
+          else
+            NEWER=$(printf '%s\n%s\n' "$CURRENT_VERSION" "$LATEST_VERSION" | sort -V | tail -1)
+            if [ "$NEWER" = "$LATEST_VERSION" ]; then
+              echo "update_needed=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "update_needed=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Update formula version and checksums
+        if: steps.check.outputs.update_needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CURRENT_VERSION: ${{ steps.check.outputs.current_version }}
+          LATEST_VERSION: ${{ steps.check.outputs.latest_version }}
+          LATEST_TAG: ${{ steps.check.outputs.latest_tag }}
+        run: |
+          # Update version string
+          ESCAPED_CURRENT=$(printf '%s\n' "$CURRENT_VERSION" | sed 's/[.[\\*^$]/\\&/g')
+          sed -i "s/version \"${ESCAPED_CURRENT}\"/version \"${LATEST_VERSION}\"/" ${{ matrix.formula.file }}
+
+          # Fetch release asset download URLs
+          ASSETS_JSON=$(gh release view --repo ${{ matrix.formula.repo }} "$LATEST_TAG" --json assets -q '.assets[] | {name: .name, url: .url}')
+
+          # Helper: compute sha256 for a given asset filename pattern (with version substituted)
+          compute_sha256() {
+            local pattern="$1"
+            local asset_name="${pattern/\{version\}/$LATEST_VERSION}"
+            local download_url
+            download_url=$(echo "$ASSETS_JSON" | jq -r --arg name "$asset_name" 'select(.name == $name) | .url')
+            if [ -z "$download_url" ]; then
+              echo "ERROR: asset '$asset_name' not found in release $LATEST_TAG" >&2
+              return 1
+            fi
+            curl -fsSL "$download_url" | sha256sum | awk '{print $1}'
+          }
+
+          # Update each architecture's sha256
+          ASSETS='${{ toJSON(matrix.formula.assets) }}'
+          echo "$ASSETS" | jq -c '.[]' | while IFS= read -r asset; do
+            ARCH=$(echo "$asset" | jq -r '.arch')
+            PATTERN=$(echo "$asset" | jq -r '.pattern')
+            NEW_SHA=$(compute_sha256 "$PATTERN")
+            if [ $? -ne 0 ]; then
+              echo "Skipping sha256 update for arch $ARCH due to missing asset."
+              continue
+            fi
+            echo "New sha256 for $ARCH: $NEW_SHA"
+
+            # Replace the sha256 line immediately following the URL line for this arch
+            # We look for the url line containing the arch-specific pattern (with version) and replace the sha256 on the very next sha256 line after it.
+            ASSET_NAME="${PATTERN/\{version\}/$LATEST_VERSION}"
+            # Use python for reliable multi-line sed-like replacement
+            python3 - "${{ matrix.formula.file }}" "$ASSET_NAME" "$NEW_SHA" <<'PYEOF'
+          import sys, re
+
+          filepath, asset_name, new_sha = sys.argv[1], sys.argv[2], sys.argv[3]
+          with open(filepath) as f:
+              content = f.read()
+
+          # Match url line containing asset_name followed (possibly with whitespace lines) by a sha256 line
+          pattern = re.compile(
+              r'(url\s+"[^"]*' + re.escape(asset_name) + r'[^"]*"\n)'
+              r'(\s*sha256\s+)"[0-9a-f]+"',
+              re.MULTILINE
+          )
+          new_content = pattern.sub(r'\1\g<2>"' + new_sha + '"', content)
+          with open(filepath, 'w') as f:
+              f.write(new_content)
+          print(f"Updated sha256 for {asset_name} to {new_sha}")
+          PYEOF
+          done
+
+      - name: Create Pull Request
+        if: steps.check.outputs.update_needed == 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update ${{ matrix.formula.name }} to ${{ steps.check.outputs.latest_version }}"
+          branch: "update/${{ matrix.formula.name }}-${{ steps.check.outputs.latest_version }}"
+          title: "chore: update ${{ matrix.formula.name }} to ${{ steps.check.outputs.latest_version }}"
+          body: |
+            Auto-update ${{ matrix.formula.name }} from `${{ steps.check.outputs.current_version }}` to `${{ steps.check.outputs.latest_version }}`.
+
+            Release notes: https://github.com/${{ matrix.formula.repo }}/releases/tag/${{ steps.check.outputs.latest_tag }}
+          labels: auto-update
+          reviewers: nhymxu

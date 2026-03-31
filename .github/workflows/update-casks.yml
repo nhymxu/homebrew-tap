@@ -19,9 +19,6 @@ jobs:
       fail-fast: false
       matrix:
         cask:
-          - name: cliproxyapi-plus
-            file: Casks/cliproxyapi-plus.rb
-            repo: router-for-me/CLIProxyAPIPlus
           - name: defguard-client
             file: Casks/defguard-client.rb
             repo: DefGuard/client
