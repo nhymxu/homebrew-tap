@@ -1,8 +1,8 @@
-name: Auto Update Formulae
+name: Auto Update
 
 on:
   schedule:
-    - cron: '0 1 * * *'
+    - cron: '0 0 * * *'
   workflow_dispatch:
 
 permissions:
@@ -10,7 +10,84 @@ permissions:
   pull-requests: write
 
 jobs:
-  update:
+  update-casks:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    strategy:
+      fail-fast: false
+      matrix:
+        cask:
+          - name: defguard-client
+            file: Casks/defguard-client.rb
+            repo: DefGuard/client
+          - name: f2-binary
+            file: Casks/f2-binary.rb
+            repo: ayoisaiah/f2
+          - name: gotohp
+            file: Casks/gotohp.rb
+            repo: xob0t/gotohp
+          - name: usql
+            file: Casks/usql.rb
+            repo: xo/usql
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Check latest version
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LATEST_TAG=$(gh release view --repo ${{ matrix.cask.repo }} --json tagName -q .tagName)
+          LATEST_VERSION="${LATEST_TAG#v}"
+
+          CURRENT_VERSION=$(sed -n 's/.*version "\([^"]*\)".*/\1/p' ${{ matrix.cask.file }})
+
+          echo "Latest version: $LATEST_VERSION"
+          echo "Current version: $CURRENT_VERSION"
+
+          echo "latest_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
+          echo "latest_version=$LATEST_VERSION" >> "$GITHUB_OUTPUT"
+          echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+
+          if [ "$LATEST_VERSION" = "$CURRENT_VERSION" ]; then
+            echo "update_needed=false" >> "$GITHUB_OUTPUT"
+          else
+            NEWER=$(printf '%s\n%s\n' "$CURRENT_VERSION" "$LATEST_VERSION" | sort -V | tail -1)
+            if [ "$NEWER" = "$LATEST_VERSION" ]; then
+              echo "update_needed=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "update_needed=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Update cask version
+        if: steps.check.outputs.update_needed == 'true'
+        env:
+          CURRENT_VERSION: ${{ steps.check.outputs.current_version }}
+          LATEST_VERSION: ${{ steps.check.outputs.latest_version }}
+        run: |
+          ESCAPED_CURRENT=$(printf '%s\n' "$CURRENT_VERSION" | sed 's/[.[\\*^$]/\\&/g')
+          sed -i "s/version \"${ESCAPED_CURRENT}\"/version \"${LATEST_VERSION}\"/" ${{ matrix.cask.file }}
+
+      - name: Create Pull Request
+        if: steps.check.outputs.update_needed == 'true'
+        uses: peter-evans/create-pull-request@v8
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update ${{ matrix.cask.name }} to ${{ steps.check.outputs.latest_version }}"
+          branch: "update/${{ matrix.cask.name }}-${{ steps.check.outputs.latest_version }}"
+          title: "chore: update ${{ matrix.cask.name }} to ${{ steps.check.outputs.latest_version }}"
+          body: |
+            Auto-update ${{ matrix.cask.name }} from `${{ steps.check.outputs.current_version }}` to `${{ steps.check.outputs.latest_version }}`.
+
+            Release notes: https://github.com/${{ matrix.cask.repo }}/releases/tag/${{ steps.check.outputs.latest_tag }}
+          labels: auto-update
+          reviewers: nhymxu
+
+  update-formulae:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -99,8 +176,6 @@ jobs:
             fi
             echo "New sha256 for $ARCH: $NEW_SHA"
 
-            # Replace the sha256 line immediately following the URL line for this arch
-            # We look for the url line containing the arch-specific pattern (with version) and replace the sha256 on the very next sha256 line after it.
             ASSET_NAME="${PATTERN/\{version\}/$LATEST_VERSION}"
             # Use python for reliable multi-line sed-like replacement
             python3 - "${{ matrix.formula.file }}" "$ASSET_NAME" "$NEW_SHA" <<'PYEOF'
@@ -110,7 +185,7 @@ jobs:
           with open(filepath) as f:
               content = f.read()
 
-          # Match url line containing asset_name followed (possibly with whitespace lines) by a sha256 line
+          # Match url line containing asset_name followed by a sha256 line
           pattern = re.compile(
               r'(url\s+"[^"]*' + re.escape(asset_name) + r'[^"]*"\n)'
               r'(\s*sha256\s+)"[0-9a-f]+"',
