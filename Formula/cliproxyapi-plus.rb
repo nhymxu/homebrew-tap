@@ -1,7 +1,7 @@
 class CliproxyapiPlus < Formula
   desc "The Plus version of CLIProxyAPI. Wrap Gemini CLI, Codex, Claude Code, Qwen Code as an API service"
   homepage "https://github.com/router-for-me/CLIProxyAPIPlus"
-  version "6.9.15-0"
+  version "6.9.16-0"
   
   if OS.mac? && Hardware::CPU.arm?
     url "https://github.com/router-for-me/CLIProxyAPIPlus/releases/download/v#{version}/CLIProxyAPIPlus_#{version}_darwin_arm64.tar.gz"
