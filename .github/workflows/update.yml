@@ -178,16 +178,20 @@ jobs:
 
             ASSET_NAME="${PATTERN/\{version\}/$LATEST_VERSION}"
             # Use python for reliable multi-line sed-like replacement
-            python3 - "${{ matrix.formula.file }}" "$ASSET_NAME" "$NEW_SHA" <<'PYEOF'
+            python3 - "${{ matrix.formula.file }}" "$ASSET_NAME" "$NEW_SHA" "$LATEST_VERSION" <<'PYEOF'
           import sys, re
 
-          filepath, asset_name, new_sha = sys.argv[1], sys.argv[2], sys.argv[3]
+          filepath, asset_name, new_sha, latest_version = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
           with open(filepath) as f:
               content = f.read()
 
-          # Match url line containing asset_name followed by a sha256 line
+          # Formula URLs use Ruby interpolation (#{version}), not the literal version string.
+          # Replace the literal version back with #{version} for matching.
+          formula_asset = asset_name.replace(latest_version, '#{version}')
+
+          # Match url line containing formula_asset followed by a sha256 line
           pattern = re.compile(
-              r'(url\s+"[^"]*' + re.escape(asset_name) + r'[^"]*"\n)'
+              r'(url\s+"[^"]*' + re.escape(formula_asset) + r'[^"]*"\n)'
               r'(\s*sha256\s+)"[0-9a-f]+"',
               re.MULTILINE
           )
