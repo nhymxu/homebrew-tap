@@ -5,12 +5,12 @@ class CliproxyapiPlus < Formula
   
   if OS.mac? && Hardware::CPU.arm?
     url "https://github.com/router-for-me/CLIProxyAPIPlus/releases/download/v#{version}/CLIProxyAPIPlus_#{version}_darwin_arm64.tar.gz"
-    sha256 "b4f085d94f40cb09c64eb965383d4f56b77256f2e68b2b1d467c72e25467d7be"
+    sha256 "8e722383d5d1a521d682b94150bd81da8014e19e81e61b8048c3b1fe4ea555f7"
   end
 
   if OS.mac? && Hardware::CPU.intel?
     url "https://github.com/router-for-me/CLIProxyAPIPlus/releases/download/v#{version}/CLIProxyAPIPlus_#{version}_darwin_amd64.tar.gz"
-    sha256 "baba18529cbc85a369aa273f31f7810ce965f755f881cd286c663da27a4a7ac8"
+    sha256 "fcc0064af24ceb30ad027e8962ef3befe198814b1cdd34227aa7b679a8093ad5"
   end
 
   def install
