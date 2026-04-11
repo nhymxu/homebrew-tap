@@ -1,16 +1,16 @@
 class CliproxyapiPlus < Formula
   desc "The Plus version of CLIProxyAPI. Wrap Gemini CLI, Codex, Claude Code, Qwen Code as an API service"
   homepage "https://github.com/router-for-me/CLIProxyAPIPlus"
-  version "6.9.19-0"
+  version "6.9.22-0"
   
   if OS.mac? && Hardware::CPU.arm?
     url "https://github.com/router-for-me/CLIProxyAPIPlus/releases/download/v#{version}/CLIProxyAPIPlus_#{version}_darwin_arm64.tar.gz"
-    sha256 "420403d6c85cec460c6f3ad698e2487a611b23c86531ecc4c6036d3ffce16450"
+    sha256 "5110f0d64ef73d730270e70ca37928475ec3171ae6dfcd446f1d7a9a1c1a24f5"
   end
 
   if OS.mac? && Hardware::CPU.intel?
     url "https://github.com/router-for-me/CLIProxyAPIPlus/releases/download/v#{version}/CLIProxyAPIPlus_#{version}_darwin_amd64.tar.gz"
-    sha256 "51da8b562652c9e02d95278bf13495a48a9f7d1198da633db526ea6d2448565a"
+    sha256 "2607d1423445098243b2d3f9fac27c9ece699e513182b71b5917fb83c8bcbbfb"
   end
 
   def install
