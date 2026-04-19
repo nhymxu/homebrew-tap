@@ -90,6 +90,7 @@ jobs:
           git add "${{ matrix.cask.file }}"
           git commit -m "chore: update ${CASK_NAME} to ${LATEST_VERSION}"
 
+          push_succeeded=false
           for attempt in 1 2 3; do
             git fetch origin main
             if ! git rebase origin/main; then
@@ -103,18 +104,20 @@ jobs:
             fi
 
             if git push origin HEAD:main; then
-              exit 0
+              push_succeeded=true
+              break
             fi
 
             if [ "$attempt" -eq 3 ]; then
-              echo "Push failed after retries."
-              exit 1
+              break
             fi
             sleep 2
             continue
           done
-          echo "Push failed after retries."
-          exit 1
+          if [ "$push_succeeded" != "true" ]; then
+            echo "Push failed after retries."
+            exit 1
+          fi
 
   update-formulae:
     runs-on: ubuntu-latest
@@ -211,8 +214,8 @@ jobs:
             python3 - "${{ matrix.formula.file }}" "$ASSET_NAME" "$NEW_SHA" "$LATEST_VERSION" <<'PYEOF'
           import sys, re
 
-          filepath, asset_name, new_sha, latest_version = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
-          with open(filepath) as f:
+          formula_filepath, asset_name, new_sha, latest_version = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+          with open(formula_filepath) as f:
               content = f.read()
 
           # Formula URLs use Ruby interpolation (#{version}), not the literal version string.
@@ -226,7 +229,7 @@ jobs:
               re.MULTILINE
           )
           new_content = pattern.sub(r'\1\g<2>"' + new_sha + '"', content)
-          with open(filepath, 'w') as f:
+          with open(formula_filepath, 'w') as f:
               f.write(new_content)
           print(f"Updated sha256 for {asset_name} to {new_sha}")
           PYEOF
@@ -249,6 +252,7 @@ jobs:
           git add "${{ matrix.formula.file }}"
           git commit -m "chore: update ${FORMULA_NAME} to ${LATEST_VERSION}"
 
+          push_succeeded=false
           for attempt in 1 2 3; do
             git fetch origin main
             if ! git rebase origin/main; then
@@ -262,15 +266,17 @@ jobs:
             fi
 
             if git push origin HEAD:main; then
-              exit 0
+              push_succeeded=true
+              break
             fi
 
             if [ "$attempt" -eq 3 ]; then
-              echo "Push failed after retries."
-              exit 1
+              break
             fi
             sleep 2
             continue
           done
-          echo "Push failed after retries."
-          exit 1
+          if [ "$push_succeeded" != "true" ]; then
+            echo "Push failed after retries."
+            exit 1
+          fi
