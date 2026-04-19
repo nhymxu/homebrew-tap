@@ -1,0 +1,271 @@
+name: Auto Update direct commit to main
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-casks:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        cask:
+          - name: defguard-client
+            file: Casks/defguard-client.rb
+            repo: DefGuard/client
+          - name: f2-binary
+            file: Casks/f2-binary.rb
+            repo: ayoisaiah/f2
+          - name: gotohp
+            file: Casks/gotohp.rb
+            repo: xob0t/gotohp
+          - name: usql
+            file: Casks/usql.rb
+            repo: xo/usql
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Check latest version
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LATEST_TAG=$(gh release view --repo ${{ matrix.cask.repo }} --json tagName -q .tagName)
+          LATEST_VERSION="${LATEST_TAG#v}"
+
+          CURRENT_VERSION=$(sed -n 's/.*version "\([^"]*\)".*/\1/p' ${{ matrix.cask.file }})
+
+          echo "Latest version: $LATEST_VERSION"
+          echo "Current version: $CURRENT_VERSION"
+
+          echo "latest_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
+          echo "latest_version=$LATEST_VERSION" >> "$GITHUB_OUTPUT"
+          echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+
+          if [ "$LATEST_VERSION" = "$CURRENT_VERSION" ]; then
+            echo "update_needed=false" >> "$GITHUB_OUTPUT"
+          else
+            NEWER=$(printf '%s\n%s\n' "$CURRENT_VERSION" "$LATEST_VERSION" | sort -V | tail -1)
+            if [ "$NEWER" = "$LATEST_VERSION" ]; then
+              echo "update_needed=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "update_needed=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Update cask version
+        if: steps.check.outputs.update_needed == 'true'
+        env:
+          CURRENT_VERSION: ${{ steps.check.outputs.current_version }}
+          LATEST_VERSION: ${{ steps.check.outputs.latest_version }}
+        run: |
+          ESCAPED_CURRENT=$(printf '%s\n' "$CURRENT_VERSION" | sed 's/[.[\\*^$]/\\&/g')
+          sed -i "s/version \"${ESCAPED_CURRENT}\"/version \"${LATEST_VERSION}\"/" ${{ matrix.cask.file }}
+
+      - name: Commit and push to main
+        if: steps.check.outputs.update_needed == 'true'
+        env:
+          CASK_NAME: ${{ matrix.cask.name }}
+          LATEST_VERSION: ${{ steps.check.outputs.latest_version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet -- "${{ matrix.cask.file }}"; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git add "${{ matrix.cask.file }}"
+          git commit -m "chore: update ${CASK_NAME} to ${LATEST_VERSION}"
+
+          for attempt in 1 2 3; do
+            git fetch origin main
+            if ! git rebase origin/main; then
+              git rebase --abort
+              if [ "$attempt" -eq 3 ]; then
+                echo "Rebase failed after retries."
+                exit 1
+              fi
+              sleep 2
+              continue
+            fi
+
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              echo "Push failed after retries."
+              exit 1
+            fi
+            sleep 2
+          done
+
+  update-formulae:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        formula:
+          - name: cliproxyapi-plus
+            file: Formula/cliproxyapi-plus.rb
+            repo: router-for-me/CLIProxyAPIPlus
+            assets:
+              - arch: arm64
+                pattern: "CLIProxyAPIPlus_{version}_darwin_arm64.tar.gz"
+              - arch: amd64
+                pattern: "CLIProxyAPIPlus_{version}_darwin_amd64.tar.gz"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Check latest version
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LATEST_TAG=$(gh release view --repo ${{ matrix.formula.repo }} --json tagName -q .tagName)
+          LATEST_VERSION="${LATEST_TAG#v}"
+
+          CURRENT_VERSION=$(sed -n 's/.*version "\([^"]*\)".*/\1/p' ${{ matrix.formula.file }})
+
+          echo "Latest version: $LATEST_VERSION"
+          echo "Current version: $CURRENT_VERSION"
+
+          echo "latest_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
+          echo "latest_version=$LATEST_VERSION" >> "$GITHUB_OUTPUT"
+          echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
+
+          if [ "$LATEST_VERSION" = "$CURRENT_VERSION" ]; then
+            echo "update_needed=false" >> "$GITHUB_OUTPUT"
+          else
+            NEWER=$(printf '%s\n%s\n' "$CURRENT_VERSION" "$LATEST_VERSION" | sort -V | tail -1)
+            if [ "$NEWER" = "$LATEST_VERSION" ]; then
+              echo "update_needed=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "update_needed=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: Update formula version and checksums
+        if: steps.check.outputs.update_needed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CURRENT_VERSION: ${{ steps.check.outputs.current_version }}
+          LATEST_VERSION: ${{ steps.check.outputs.latest_version }}
+          LATEST_TAG: ${{ steps.check.outputs.latest_tag }}
+        run: |
+          # Update version string
+          ESCAPED_CURRENT=$(printf '%s\n' "$CURRENT_VERSION" | sed 's/[.[\\*^$]/\\&/g')
+          sed -i "s/version \"${ESCAPED_CURRENT}\"/version \"${LATEST_VERSION}\"/" ${{ matrix.formula.file }}
+
+          # Fetch release asset download URLs
+          ASSETS_JSON=$(gh release view --repo ${{ matrix.formula.repo }} "$LATEST_TAG" --json assets -q '.assets[] | {name: .name, url: .url}')
+
+          # Helper: compute sha256 for a given asset filename pattern (with version substituted)
+          compute_sha256() {
+            local pattern="$1"
+            local asset_name="${pattern/\{version\}/$LATEST_VERSION}"
+            local download_url
+            download_url=$(echo "$ASSETS_JSON" | jq -r --arg name "$asset_name" 'select(.name == $name) | .url')
+            if [ -z "$download_url" ]; then
+              echo "ERROR: asset '$asset_name' not found in release $LATEST_TAG" >&2
+              return 1
+            fi
+            curl -fsSL "$download_url" | sha256sum | awk '{print $1}'
+          }
+
+          # Update each architecture's sha256
+          ASSETS='${{ toJSON(matrix.formula.assets) }}'
+          echo "$ASSETS" | jq -c '.[]' | while IFS= read -r asset; do
+            ARCH=$(echo "$asset" | jq -r '.arch')
+            PATTERN=$(echo "$asset" | jq -r '.pattern')
+            NEW_SHA=$(compute_sha256 "$PATTERN")
+            if [ $? -ne 0 ]; then
+              echo "Skipping sha256 update for arch $ARCH due to missing asset."
+              continue
+            fi
+            echo "New sha256 for $ARCH: $NEW_SHA"
+
+            ASSET_NAME="${PATTERN/\{version\}/$LATEST_VERSION}"
+            # Use python for reliable multi-line sed-like replacement
+            python3 - "${{ matrix.formula.file }}" "$ASSET_NAME" "$NEW_SHA" "$LATEST_VERSION" <<'PYEOF'
+          import sys, re
+
+          filepath, asset_name, new_sha, latest_version = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+          with open(filepath) as f:
+              content = f.read()
+
+          # Formula URLs use Ruby interpolation (#{version}), not the literal version string.
+          # Replace the literal version back with #{version} for matching.
+          formula_asset = asset_name.replace(latest_version, '#{version}')
+
+          # Match url line containing formula_asset followed by a sha256 line
+          pattern = re.compile(
+              r'(url\s+"[^"]*' + re.escape(formula_asset) + r'[^"]*"\n)'
+              r'(\s*sha256\s+)"[0-9a-f]+"',
+              re.MULTILINE
+          )
+          new_content = pattern.sub(r'\1\g<2>"' + new_sha + '"', content)
+          with open(filepath, 'w') as f:
+              f.write(new_content)
+          print(f"Updated sha256 for {asset_name} to {new_sha}")
+          PYEOF
+          done
+
+      - name: Commit and push to main
+        if: steps.check.outputs.update_needed == 'true'
+        env:
+          FORMULA_NAME: ${{ matrix.formula.name }}
+          LATEST_VERSION: ${{ steps.check.outputs.latest_version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet -- "${{ matrix.formula.file }}"; then
+            echo "No changes to commit."
+            exit 0
+          fi
+
+          git add "${{ matrix.formula.file }}"
+          git commit -m "chore: update ${FORMULA_NAME} to ${LATEST_VERSION}"
+
+          for attempt in 1 2 3; do
+            git fetch origin main
+            if ! git rebase origin/main; then
+              git rebase --abort
+              if [ "$attempt" -eq 3 ]; then
+                echo "Rebase failed after retries."
+                exit 1
+              fi
+              sleep 2
+              continue
+            fi
+
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 3 ]; then
+              echo "Push failed after retries."
+              exit 1
+            fi
+            sleep 2
+          done
