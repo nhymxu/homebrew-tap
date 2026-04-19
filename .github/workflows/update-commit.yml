@@ -1,4 +1,4 @@
-name: Auto Update direct commit to main
+name: Auto Update Direct Commits to Main
 
 on:
   schedule:
@@ -194,14 +194,13 @@ jobs:
 
           # Update each architecture's sha256
           ASSETS='${{ toJSON(matrix.formula.assets) }}'
-          echo "$ASSETS" | jq -c '.[]' | while IFS= read -r asset; do
+          while IFS= read -r asset; do
             ARCH=$(echo "$asset" | jq -r '.arch')
             PATTERN=$(echo "$asset" | jq -r '.pattern')
-            NEW_SHA=$(compute_sha256 "$PATTERN")
-            if [ $? -ne 0 ]; then
+            NEW_SHA=$(compute_sha256 "$PATTERN") || {
               echo "Skipping sha256 update for arch $ARCH due to missing asset."
               continue
-            fi
+            }
             echo "New sha256 for $ARCH: $NEW_SHA"
 
             ASSET_NAME="${PATTERN/\{version\}/$LATEST_VERSION}"
@@ -228,7 +227,7 @@ jobs:
               f.write(new_content)
           print(f"Updated sha256 for {asset_name} to {new_sha}")
           PYEOF
-          done
+          done < <(echo "$ASSETS" | jq -c '.[]')
 
       - name: Commit and push to main
         if: steps.check.outputs.update_needed == 'true'
