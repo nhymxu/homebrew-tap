@@ -70,7 +70,7 @@ jobs:
           CURRENT_VERSION: ${{ steps.check.outputs.current_version }}
           LATEST_VERSION: ${{ steps.check.outputs.latest_version }}
         run: |
-          ESCAPED_CURRENT=$(printf '%s\n' "$CURRENT_VERSION" | sed 's/[.[]\\*^$]/\\&/g')
+          ESCAPED_CURRENT=$(printf '%s\n' "$CURRENT_VERSION" | sed 's/[.[\]\\*^$]/\\&/g')
           sed -i "s/version \"${ESCAPED_CURRENT}\"/version \"${LATEST_VERSION}\"/" ${{ matrix.cask.file }}
 
       - name: Commit and push to main
@@ -174,7 +174,7 @@ jobs:
           LATEST_TAG: ${{ steps.check.outputs.latest_tag }}
         run: |
           # Update version string
-          ESCAPED_CURRENT=$(printf '%s\n' "$CURRENT_VERSION" | sed 's/[.[]\\*^$]/\\&/g')
+          ESCAPED_CURRENT=$(printf '%s\n' "$CURRENT_VERSION" | sed 's/[.[\]\\*^$]/\\&/g')
           sed -i "s/version \"${ESCAPED_CURRENT}\"/version \"${LATEST_VERSION}\"/" ${{ matrix.formula.file }}
 
           # Fetch release asset download URLs
