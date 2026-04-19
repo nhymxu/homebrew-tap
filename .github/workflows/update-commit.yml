@@ -113,6 +113,8 @@ jobs:
             sleep 2
             continue
           done
+          echo "Push failed after retries."
+          exit 1
 
   update-formulae:
     runs-on: ubuntu-latest
@@ -270,3 +272,5 @@ jobs:
             sleep 2
             continue
           done
+          echo "Push failed after retries."
+          exit 1
