@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  update-casks:
+  update-cask:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -87,7 +87,8 @@ jobs:
           labels: auto-update
           reviewers: nhymxu
 
-  update-formulae:
+  update-formula:
+    if: false
     runs-on: ubuntu-latest
     permissions:
       contents: write
