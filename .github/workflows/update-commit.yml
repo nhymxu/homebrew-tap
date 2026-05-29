@@ -29,6 +29,12 @@ jobs:
           - name: usql
             file: Casks/usql.rb
             repo: xo/usql
+          - name: materialgram
+            file: Casks/materialgram.rb
+            repo: kukuruzka165/materialgram
+          - name: fagram
+            file: Casks/fagram.rb
+            repo: fagramdesktop/fadesktop
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
