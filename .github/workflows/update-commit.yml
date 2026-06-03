@@ -35,65 +35,36 @@ jobs:
           - name: fagram
             file: Casks/fagram.rb
             repo: fagramdesktop/fadesktop
+          - name: 3utools
+            file: Casks/3utools.rb
+            repo: 3utools
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
         with:
           ref: main
           fetch-depth: 0
 
-      - name: Check latest version
-        id: check
+      - name: Check & update version
+        id: update
         env:
           GH_TOKEN: ${{ github.token }}
-        run: |
-          LATEST_TAG=$(gh release view --repo ${{ matrix.cask.repo }} --json tagName -q .tagName)
-          LATEST_VERSION="${LATEST_TAG#v}"
-
-          CURRENT_VERSION=$(sed -n 's/.*version "\([^"]*\)".*/\1/p' ${{ matrix.cask.file }})
-
-          echo "Latest version: $LATEST_VERSION"
-          echo "Current version: $CURRENT_VERSION"
-
-          echo "latest_tag=$LATEST_TAG" >> "$GITHUB_OUTPUT"
-          echo "latest_version=$LATEST_VERSION" >> "$GITHUB_OUTPUT"
-          echo "current_version=$CURRENT_VERSION" >> "$GITHUB_OUTPUT"
-
-          if [ "$LATEST_VERSION" = "$CURRENT_VERSION" ]; then
-            echo "update_needed=false" >> "$GITHUB_OUTPUT"
-          else
-            NEWER=$(printf '%s\n%s\n' "$CURRENT_VERSION" "$LATEST_VERSION" | sort -V | tail -1)
-            if [ "$NEWER" = "$LATEST_VERSION" ]; then
-              echo "update_needed=true" >> "$GITHUB_OUTPUT"
-            else
-              echo "update_needed=false" >> "$GITHUB_OUTPUT"
-            fi
-          fi
-
-      - name: Update cask version
-        if: steps.check.outputs.update_needed == 'true'
-        env:
-          CURRENT_VERSION: ${{ steps.check.outputs.current_version }}
-          LATEST_VERSION: ${{ steps.check.outputs.latest_version }}
-        run: |
-          ESCAPED_CURRENT=$(printf '%s\n' "$CURRENT_VERSION" | sed 's/[.[\]\\*^$]/\\&/g')
-          sed -i "s/version \"${ESCAPED_CURRENT}\"/version \"${LATEST_VERSION}\"/" ${{ matrix.cask.file }}
+        run: .github/update-cask.sh "${{ matrix.cask.file }}" "${{ matrix.cask.repo }}" "${{ matrix.cask.name }}"
 
       - name: Commit and push to main
-        if: steps.check.outputs.update_needed == 'true'
         env:
           CASK_NAME: ${{ matrix.cask.name }}
-          LATEST_VERSION: ${{ steps.check.outputs.latest_version }}
+          CASK_FILE: ${{ matrix.cask.file }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
-          if git diff --quiet -- "${{ matrix.cask.file }}"; then
+          if git diff --quiet -- "$CASK_FILE"; then
             echo "No changes to commit."
             exit 0
           fi
 
-          git add "${{ matrix.cask.file }}"
+          LATEST_VERSION=$(sed -n 's/.*version "\([^"]*\)".*/\1/p' "$CASK_FILE")
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$CASK_FILE"
           git commit -m "chore: update ${CASK_NAME} to ${LATEST_VERSION}"
 
           push_succeeded=false
