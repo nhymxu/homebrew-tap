@@ -1,7 +1,7 @@
 cask "3utools" do
   arch arm: "arm64", intel: "x64"
 
-  version "9.01.010"
+  version "9.03.002"
   sha256 :no_check # required as upstream package is updated in-place
 
   url "https://dl.3u.com/update/v900/macos/#{arch}/3uTools_v#{version}_#{arch}.dmg"
