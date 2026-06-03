@@ -1,4 +1,4 @@
-name: Auto Update Direct Commits to Main
+name: Auto Update direct commit
 
 on:
   schedule:
@@ -48,7 +48,59 @@ jobs:
         id: update
         env:
           GH_TOKEN: ${{ github.token }}
-        run: .github/update-cask.sh "${{ matrix.cask.file }}" "${{ matrix.cask.repo }}" "${{ matrix.cask.name }}"
+          CASK_FILE: ${{ matrix.cask.file }}
+          REPO: ${{ matrix.cask.repo }}
+          CASK_NAME: ${{ matrix.cask.name }}
+        run: |
+          echo "::group::$CASK_NAME"
+
+          if [ "$REPO" = "3utools" ]; then
+            PAGE_SOURCE=$(curl -sL --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://www.3u.com/productsWin")
+            DOWNLOAD_URL=$(echo "$PAGE_SOURCE" | grep -oE 'https://dl\.3u\.com/update/v900/macos/arm64/3uTools_v([0-9.]*)_arm64\.dmg' | head -1 || true)
+
+            echo "-----------------"
+            echo $DOWNLOAD_URL
+            echo "-----------------"
+
+            if [ -z "$DOWNLOAD_URL" ]; then
+              echo "::warning::Could not find macOS download link"
+              echo "::endgroup::"
+              exit 1
+            fi
+            LATEST_VERSION=$(echo "$DOWNLOAD_URL" | sed -n 's/.*3uTools_v\([0-9.]*\)_arm64\.dmg/\1/p')
+          else
+            LATEST_TAG=$(gh release view --repo "$REPO" --json tagName -q .tagName 2>/dev/null || true)
+            if [ -z "$LATEST_TAG" ]; then
+              echo "::warning::No GitHub releases found for $REPO"
+              echo "::endgroup::"
+              exit 0
+            fi
+            LATEST_VERSION="${LATEST_TAG#v}"
+          fi
+
+          CURRENT_VERSION=$(sed -n 's/.*version "\([^"]*\)".*/\1/p' "$CASK_FILE")
+          echo "Current: $CURRENT_VERSION"
+          echo "Latest:  $LATEST_VERSION"
+
+          if [ -z "$LATEST_VERSION" ] || [ "$LATEST_VERSION" = "$CURRENT_VERSION" ]; then
+            echo "No update needed"
+            echo "::endgroup::"
+            exit 0
+          fi
+
+          NEWER=$(printf '%s\n%s\n' "$CURRENT_VERSION" "$LATEST_VERSION" | sort -V | tail -1)
+          if [ "$NEWER" != "$LATEST_VERSION" ]; then
+            echo "Current version is newer, skipping"
+            echo "::endgroup::"
+            exit 0
+          fi
+
+          echo "Updating to $LATEST_VERSION..."
+          ESCAPED_CURRENT=$(printf '%s\n' "$CURRENT_VERSION" | sed 's/[.[\]\\*^$]/\\&/g')
+          sed -i "s/version \"${ESCAPED_CURRENT}\"/version \"${LATEST_VERSION}\"/" "$CASK_FILE"
+          echo "Done"
+
+          echo "::endgroup::"
 
       - name: Commit and push to main
         env:
