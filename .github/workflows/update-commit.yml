@@ -18,28 +18,20 @@ jobs:
       matrix:
         cask:
           - name: defguard-client
-            file: Casks/defguard-client.rb
             repo: DefGuard/client
           - name: f2-binary
-            file: Casks/f2-binary.rb
             repo: ayoisaiah/f2
           - name: gotohp
-            file: Casks/gotohp.rb
             repo: xob0t/gotohp
           - name: usql
-            file: Casks/usql.rb
             repo: xo/usql
           - name: materialgram
-            file: Casks/materialgram.rb
             repo: kukuruzka165/materialgram
           - name: fagram
-            file: Casks/fagram.rb
             repo: fagramdesktop/fadesktop
           - name: itsypad
-            file: Casks/itsypad.rb
             repo: nickustinov/itsypad-macos
           - name: 3utools
-            file: Casks/3utools.rb
             repo: 3utools
     steps:
       - uses: actions/checkout@v6
@@ -51,11 +43,12 @@ jobs:
         id: update
         env:
           GH_TOKEN: ${{ github.token }}
-          CASK_FILE: ${{ matrix.cask.file }}
           REPO: ${{ matrix.cask.repo }}
           CASK_NAME: ${{ matrix.cask.name }}
         run: |
           echo "::group::$CASK_NAME"
+
+          CASK_FILE="Casks/${CASK_NAME}.rb"
 
           if [ "$REPO" = "3utools" ]; then
             PAGE_SOURCE=$(curl -sL --user-agent "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" "https://www.3u.com/productsWin")
@@ -108,8 +101,9 @@ jobs:
       - name: Commit and push to main
         env:
           CASK_NAME: ${{ matrix.cask.name }}
-          CASK_FILE: ${{ matrix.cask.file }}
         run: |
+          CASK_FILE="Casks/${CASK_NAME}.rb"
+
           if git diff --quiet -- "$CASK_FILE"; then
             echo "No changes to commit."
             exit 0
