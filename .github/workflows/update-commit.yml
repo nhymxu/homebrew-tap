@@ -35,6 +35,9 @@ jobs:
           - name: fagram
             file: Casks/fagram.rb
             repo: fagramdesktop/fadesktop
+          - name: itsypad
+            file: Casks/itsypad.rb
+            repo: nickustinov/itsypad-macos
           - name: 3utools
             file: Casks/3utools.rb
             repo: 3utools
