@@ -31,6 +31,8 @@ jobs:
             repo: fagramdesktop/fadesktop
           - name: itsypad
             repo: nickustinov/itsypad-macos
+          - name: soundknobs
+            repo: valeriy777-ua/SoundKnobs
           - name: 3utools
             repo: 3utools
     steps:
