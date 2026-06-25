@@ -33,6 +33,8 @@ jobs:
             repo: nickustinov/itsypad-macos
           - name: soundknobs
             repo: valeriy777-ua/SoundKnobs
+          - name: terax
+            repo: crynta/terax-ai
           - name: 3utools
             repo: 3utools
     steps:
