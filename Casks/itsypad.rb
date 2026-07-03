@@ -1,5 +1,5 @@
 cask "itsypad" do
-  version "1.16.0"
+  version "1.17.0"
   sha256 :no_check
 
   url "https://github.com/nickustinov/itsypad-macos/releases/download/v#{version}/Itsypad-#{version}.dmg"
