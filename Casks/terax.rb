@@ -1,5 +1,5 @@
 cask "terax" do
-  version "0.8.2"
+  version "0.8.5"
   sha256 :no_check
   depends_on arch: :arm64
 
