@@ -9,7 +9,7 @@ cask "trae" do
     homepage "https://www.trae.ai/"
 
     auto_updates false
-    depends_on macos: ">= :catalina"
+    depends_on macos: :catalina
 
     app "Trae.app"
 
