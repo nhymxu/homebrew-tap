@@ -1,5 +1,5 @@
 cask "fagram" do
-  version "2.3.3"
+  version "2.3.4"
   sha256 :no_check
 
   url "https://github.com/fagramdesktop/fadesktop/releases/download/#{version}/fagram-mac-#{version}.dmg"
