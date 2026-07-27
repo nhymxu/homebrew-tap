@@ -1,5 +1,5 @@
 cask "materialgram" do
-  version "6.7.7.1"
+  version "7.0.5.1"
   sha256 :no_check
 
   url "https://github.com/kukuruzka165/materialgram/releases/download/v#{version}/applesilicon_materialgram_v#{version}_untested.zip"
