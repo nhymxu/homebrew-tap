@@ -1,5 +1,5 @@
 cask "gotohp" do
-  version "0.8.1"
+  version "0.9.0"
   sha256 :no_check
 
   url "https://github.com/xob0t/gotohp/releases/download/v#{version}/gotohp-macos-universal.zip"
