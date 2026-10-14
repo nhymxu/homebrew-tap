@@ -37,12 +37,6 @@ jobs:
             repo: crynta/terax-ai
           - name: 3utools
             repo: 3utools
-          - name: artcraft-launcher
-            repo: storytold/craft-launcher
-          - name: craft-launcher
-            repo: storytold/craft-launcher
-          - name: figcraft
-            repo: storytold/figcraft
     steps:
       - uses: actions/checkout@v6
         with:
@@ -81,7 +75,7 @@ jobs:
               echo "::endgroup::"
               exit 0
             fi
-            LATEST_VERSION=$(echo "$LATEST_TAG" | sed -E 's/^[a-zA-Z_-]*v//')
+            LATEST_VERSION="${LATEST_TAG#v}"
           fi
 
           CURRENT_VERSION=$(sed -n 's/.*version "\([^"]*\)".*/\1/p' "$CASK_FILE")
