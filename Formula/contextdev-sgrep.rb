@@ -1,4 +1,4 @@
-class Sgrep < Formula
+class ContextdevSgrep < Formula
   desc "Search code and text in plain English using ripgrep and local static embeddings"
   homepage "https://github.com/context-dot-dev/sgrep"
   version "0.3.0"
