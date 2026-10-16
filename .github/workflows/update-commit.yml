@@ -150,7 +150,6 @@ jobs:
           fi
 
   update-formula:
-    if: false
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -158,14 +157,6 @@ jobs:
       fail-fast: false
       matrix:
         formula:
-          - name: cliproxyapi-plus
-            file: Formula/cliproxyapi-plus.rb
-            repo: router-for-me/CLIProxyAPIPlus
-            assets:
-              - arch: arm64
-                pattern: "CLIProxyAPIPlus_{version}_darwin_arm64.tar.gz"
-              - arch: amd64
-                pattern: "CLIProxyAPIPlus_{version}_darwin_amd64.tar.gz"
           - name: contextdev-sgrep
             file: Formula/contextdev-sgrep.rb
             repo: context-dot-dev/sgrep
