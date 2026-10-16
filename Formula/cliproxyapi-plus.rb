@@ -2,7 +2,9 @@ class CliproxyapiPlus < Formula
   desc "The Plus version of CLIProxyAPI. Wrap Gemini CLI, Codex, Claude Code, Qwen Code as an API service"
   homepage "https://github.com/router-for-me/CLIProxyAPIPlus"
   version "6.9.28-0"
-  
+
+  disable! date: "2026-10-16", because: :repo_removed
+
   if OS.mac? && Hardware::CPU.arm?
     url "https://github.com/router-for-me/CLIProxyAPIPlus/releases/download/v#{version}/CLIProxyAPIPlus_#{version}_darwin_arm64.tar.gz"
     sha256 "f7745a681b1130f34d9fb90344ae792324ba6d90e445a7372c157d2908e47864"
