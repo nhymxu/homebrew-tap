@@ -1,5 +1,5 @@
 class CliproxyapiPlus < Formula
-  desc "The Plus version of CLIProxyAPI. Wrap Gemini CLI, Codex, Claude Code, Qwen Code as an API service"
+  desc "Wrap Gemini CLI, Codex, Claude Code, and Qwen Code as an API service"
   homepage "https://github.com/router-for-me/CLIProxyAPIPlus"
   version "6.9.28-0"
 
@@ -32,7 +32,7 @@ class CliproxyapiPlus < Formula
   def caveats
     <<~EOS
       You can edit settings at #{etc}/cliproxyapi-plus.yaml.
-      
+
       Or, if you don't want/need a background service you can just run:
         /opt/homebrew/bin/cliproxyapi-plus
     EOS
