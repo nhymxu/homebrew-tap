@@ -166,6 +166,12 @@ jobs:
                 pattern: "CLIProxyAPIPlus_{version}_darwin_arm64.tar.gz"
               - arch: amd64
                 pattern: "CLIProxyAPIPlus_{version}_darwin_amd64.tar.gz"
+          - name: sgrep
+            file: Formula/sgrep.rb
+            repo: context-dot-dev/sgrep
+            assets:
+              - arch: arm64
+                pattern: "sgrep-macos-arm64.tar.gz"
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
